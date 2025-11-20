@@ -1,20 +1,22 @@
 import { Firestore } from "@google-cloud/firestore";
 
-const db = new Firestore();
+const db = new Firestore({
+  projectId: process.env.GCP_PROJECT_ID,
+});
 
 export async function saveSubscription(data) {
-  if (!data.service) return;
   await db.collection("subscriptions").add({
     ...data,
-    createdAt: new Date()
+    createdAt: new Date(),
+    source: "gmail"
   });
 }
 
 export async function addManual(data) {
   await db.collection("subscriptions").add({
     ...data,
-    source: "manual",
-    createdAt: new Date()
+    createdAt: new Date(),
+    source: "manual"
   });
 }
 

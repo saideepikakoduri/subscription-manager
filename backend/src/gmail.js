@@ -11,8 +11,8 @@ const oauth2Client = new google.auth.OAuth2(
 export function getAuthUrl() {
   return oauth2Client.generateAuthUrl({
     access_type: "offline",
-    prompt: "consent",
-    scope: ["https://www.googleapis.com/auth/gmail.readonly"]
+    scope: ["https://www.googleapis.com/auth/gmail.readonly"],
+    prompt: "consent"
   });
 }
 
@@ -21,30 +21,39 @@ export async function getTokenFromCode(code) {
   return tokens;
 }
 
+function decodeBase64Url(str) {
+  return Buffer.from(str.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+}
+
 export async function fetchEmails(access_token, refresh_token) {
   oauth2Client.setCredentials({ access_token, refresh_token });
+
   const gmail = google.gmail({ version: "v1", auth: oauth2Client });
-  const res = await gmail.users.messages.list({
+
+  const list = await gmail.users.messages.list({
     userId: "me",
     q: "receipt OR invoice OR subscription OR renewal",
     maxResults: 10
   });
 
-  if (!res.data.messages) return [];
-  let emailTexts = [];
+  if (!list.data.messages) return [];
 
-  for (const m of res.data.messages) {
-    const full = await gmail.users.messages.get({
+  let bodies = [];
+
+  for (const m of list.data.messages) {
+    const msg = await gmail.users.messages.get({
       userId: "me",
       id: m.id,
       format: "full"
     });
-    const body =
-      full.data.payload.parts?.[0]?.body?.data ||
-      full.data.payload.body?.data;
-    if (!body) continue;
-    const decoded = Buffer.from(body, "base64").toString("utf-8");
-    emailTexts.push(decoded);
+
+    const parts = msg.data.payload.parts || [];
+    const data =
+      parts[0]?.body?.data ||
+      msg.data.payload?.body?.data;
+
+    if (data) bodies.push(decodeBase64Url(data));
   }
-  return emailTexts;
+
+  return bodies;
 }
