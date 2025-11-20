@@ -1,8 +1,7 @@
-import { ADKClient } from "@google/accelerated-data-kit";
 import dotenv from "dotenv";
 dotenv.config();
 
-const adk = new ADKClient({ apiKey: process.env.ADK_API_KEY });
+const ADK_AGENT_URL = process.env.ADK_AGENT_URL || "http://localhost:8000";
 
 export async function extractSubscriptions(emailText) {
   const pipeline = {
@@ -12,6 +11,19 @@ export async function extractSubscriptions(emailText) {
     ]
   };
 
-  const result = await adk.runPipeline(pipeline);
+  const response = await fetch(`${ADK_AGENT_URL}/run_pipeline`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key": process.env.ADK_API_KEY,
+    },
+    body: JSON.stringify({ pipeline }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`ADK Agent request failed: ${response.statusText}`);
+  }
+
+  const result = await response.json();
   return result.output;
 }
