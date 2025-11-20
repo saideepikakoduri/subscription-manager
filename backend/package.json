@@ -1,0 +1,14 @@
+{
+  "name": "subscription-manager-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "start": "node index.js" },
+  "dependencies": {
+    "express": "^4.18.2",
+    "googleapis": "^128.0.0",
+    "@google-cloud/firestore": "^6.6.0",
+    "@google/accelerated-data-kit": "^1.0.0",
+    "dotenv": "^16.0.0",
+    "cors": "^2.8.5"
+  }
+}
